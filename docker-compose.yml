@@ -1,0 +1,82 @@
+# docker-compose.yml
+
+version: '3.8'
+
+services:
+  # NiFi Service for Data Ingestion
+  nifi:
+    build:
+      [cite_start]context: ./nifi  # Specifies the Dockerfile is in the nifi/ directory 
+    ports:
+      - [cite_start]"8081:8080"  # Maps port 8081 on your local machine to port 8080 in the container 
+    environment:
+      - NIFI_WEB_HTTP_PORT=8080
+    volumes:
+      - ./data_in:/opt/nifi/data_in # Mount a local folder for GetFile processor
+    networks:
+      - healthcare_network
+
+  # Spark Master for ETL Processing
+  spark-master:
+    build:
+      [cite_start]context: ./spark # Specifies the Dockerfile is in the spark/ directory 
+    ports:
+      - "9090:8080" # Spark Master UI
+      - "7077:7077"
+    networks:
+      - healthcare_network
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+
+  # Airflow Services for Orchestration 
+  # Postgres database for Airflow metadata
+  postgres:
+    image: "postgres:13"
+    environment:
+      - POSTGRES_USER=airflow
+      - POSTGRES_PASSWORD=airflow
+      - POSTGRES_DB=airflow
+    networks:
+      - healthcare_network
+
+  # Airflow Webserver for UI
+  airflow-webserver:
+    build:
+      [cite_start]context: ./airflow # Specifies the Dockerfile is in the airflow/ directory 
+    ports:
+      - [cite_start]"8080:8080" # Maps port 8080 for the Airflow UI 
+    depends_on:
+      - postgres
+    volumes:
+      - [cite_start]./airflow/dags:/opt/airflow/dags # Mounts the dags directory 
+    networks:
+      - healthcare_network
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - SNOWFLAKE_USER=${SNOWFLAKE_USER}
+      - SNOWFLAKE_PASSWORD=${SNOWFLAKE_PASSWORD}
+      # Additional Airflow & Snowflake connection details go here
+
+  # Airflow Scheduler
+  airflow-scheduler:
+    build:
+      [cite_start]context: ./airflow # Specifies the Dockerfile is in the airflow/ directory 
+    depends_on:
+      - postgres
+    volumes:
+      - [cite_start]./airflow/dags:/opt/airflow/dags # Mounts the dags directory 
+    networks:
+      - healthcare_network
+    environment:
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - SNOWFLAKE_USER=${SNOWFLAKE_USER}
+      - SNOWFLAKE_PASSWORD=${SNOWFLAKE_PASSWORD}
+      # Additional Airflow & Snowflake connection details go here
+
+# Define the shared network
+networks:
+  healthcare_network:
+    driver: bridge
