@@ -67,8 +67,8 @@ An end-to-end data engineering project to process large volumes of healthcare in
 
 ### Steps
 ```bash
-git clone https://github.com/your-repo/healthcare-etl
-cd healthcare-etl
+git clone  https://github.com/sarvesh172000/Healthcare-Claims-Insight-Platform.git
+cd Healthcare-Claims-Insight-Platform
 docker compose up --build
 ```
 
