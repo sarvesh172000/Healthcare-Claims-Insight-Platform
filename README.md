@@ -124,7 +124,4 @@ run_spark_etl >> run_dbt
 ## 🙌 Contribution
 PRs are welcome! Raise issues if you need help setting up.
 
----
 
-## 📄 License
-MIT License
